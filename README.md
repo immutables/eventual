@@ -2,6 +2,14 @@
 
 Guice add-ons to resolve future-provided dependencies.
 
+```xml
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>eventual</artifactId>
+      <version>1</version>
+    </dependency>
+```
+
 Creates special mix-in module created from defining class with special asynchronous
 transformation methods annotated with `@EventuallyProvides`, which is asynchronous analog to Guice's `@Provides`. Used to annotate asynchronous provider methods used to describe transformation of async values.
 

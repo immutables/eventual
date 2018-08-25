@@ -1,7 +1,7 @@
 
 # Examples
 
-## Future<Jection>
+## FutureJection
 
 Mini presentation about eventual providers. Slides were initially created to be presented for meetup 
 at Symphony.com (Palo Alto, CA US)

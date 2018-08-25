@@ -3,11 +3,11 @@
 Guice add-ons to resolve future-provided dependencies.
 
 ```xml
-    <dependency>
-      <groupId>org.immutables</groupId>
-      <artifactId>eventual</artifactId>
-      <version>1</version>
-    </dependency>
+<dependency>
+  <groupId>org.immutables</groupId>
+  <artifactId>eventual</artifactId>
+  <version>1.1</version>
+</dependency>
 ```
 
 Creates special mix-in module created from defining class with special asynchronous

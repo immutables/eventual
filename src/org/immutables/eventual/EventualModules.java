@@ -15,17 +15,18 @@
  */
 package org.immutables.eventual;
 
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.Invokable;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Binder;
 import com.google.inject.Exposed;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.PrivateBinder;
 import java.lang.reflect.InvocationTargetException;
@@ -61,8 +62,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * combined and transformed ListenableFuture&lt;Z&gt; available to injector.
  * <p>
  * <em>While super-classes could be used and will be scanned for such methods, method overriding is
- * not handled properly so avoid overriding provider methods. Use delegation to regular methods if some
- * functionality should be implemented or overridden.
+ * not handled properly so avoid overriding provider methods. Use delegation to regular methods if
+ * some functionality should be implemented or overridden.
  * </em>
  * <p>
  * You can annotate class with the {@literal @}{@code Singleton} annotation to have all futures be
@@ -77,7 +78,8 @@ public final class EventualModules {
 
   public interface Invoker {
     <T, R> R invoke(Invokable<T, R> invokable, T instance, Object... objects)
-        throws InvocationTargetException, IllegalAccessException;
+        throws InvocationTargetException,
+          IllegalAccessException;
   }
 
   /**
@@ -159,28 +161,71 @@ public final class EventualModules {
    */
   public static final class Builder {
     private final List<Module> modules = Lists.newArrayList();
-    private final List<Providers<?>> partials = Lists.newArrayList();
+    private final List<Providers<?>> providers = Lists.newArrayList();
     private boolean skipFailed;
 
+    /**
+     * Add regular Guice module.
+     * @param module guice module
+     * @return {@code this} builder for chained invocation
+     */
     public Builder add(Module module) {
       modules.add(checkNotNull(module));
       return this;
     }
 
+    /**
+     * Add instantiated object with "eventually provided" methods.
+     * @param providersInstance providers instance
+     * @return {@code this} builder for chained invocation
+     */
     public Builder add(Object providersInstance) {
-      partials.add(createPartial(checkNotNull(providersInstance)));
+      providers.add(createPartial(checkNotNull(providersInstance)));
       return this;
     }
 
+    /**
+     * Add class with "eventually provided" methods.
+     * @param providersClass providers class
+     * @return {@code this} builder for chained invocation
+     */
     public Builder add(Class<?> providersClass) {
       return add((Object) providersClass);
     }
 
+    /**
+     * Easy way to set executor to resolve future. By default, direct executor is used. The
+     * alternative and more flexible way to set executor is to add {@link Module} defining binding
+     * to {@link Executor} with {@literal @}{@link Eventually.Async} binding annotation.
+     * This might conflict with the one defined in module as {@link Eventually.Async}
+     * @return {@code this} builder for chained invocation
+     */
+    public Builder executor(final Executor executor) {
+      modules.add(new Module() {
+        @Override
+        public void configure(Binder binder) {
+          binder.bind(Key.get(Executor.class, Eventually.Async.class)).toInstance(executor);
+        }
+      });
+      return this;
+    }
+
+    /**
+     * If some dependencies will fail, then they will be missing from the module. If this is
+     * @return {@code this} builder for chained invocation
+     */
     public Builder skipFailed() {
       skipFailed = true;
       return this;
     }
 
+    /**
+     * Create future to module containing all resolved values. If you only need {@link Injector} and
+     * ok to block waiting it, you can use {@link #joinInjector()}. This method is needed if you
+     * want to asynchronously handle resolution and error handling, and or if you want to mix this
+     * module for other modules.
+     * @return future to module
+     */
     public ListenableFuture<Module> toFuture() {
       Injector futureInjecting = Guice.createInjector(eventualModules());
       return skipFailed
@@ -188,6 +233,12 @@ public final class EventualModules {
           : completedFrom(futureInjecting);
     }
 
+    /**
+     * Creates composite module, create injector with futures and resolves them, then creates new
+     * {@link Injector} with all {@literal @}{@link Exposed} binding as unpacked values.
+     * @return injector with unpacked values
+     * @throws RuntimeException if goes wrong
+     */
     public Injector joinInjector() {
       try {
         Module module = Futures.getUnchecked(toFuture());
@@ -203,7 +254,7 @@ public final class EventualModules {
 
     private List<Module> eventualModules() {
       List<Module> result = Lists.newArrayList(modules);
-      result.add(new EventualModule(Iterables.toArray(partials, Providers.class)));
+      result.add(new EventualModule(Iterables.toArray(providers, Providers.class)));
       return result;
     }
   }

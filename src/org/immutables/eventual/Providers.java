@@ -117,7 +117,7 @@ final class Providers<T> {
   private ImmutableList<EventualProvider<?>> introspectProviders() {
     ImmutableList.Builder<EventualProvider<?>> builder = ImmutableList.builder();
 
-    // FIXME handle method overriding?
+    // note: method overriding is not handled
     for (Class<?> t : type.getTypes().classes().rawTypes()) {
       if (t != Object.class) {
         for (Method m : t.getDeclaredMethods()) {

@@ -25,12 +25,12 @@ In this provider method above we created binding for `ListenableFuture<C>` that 
 
 ```java
 @Provides
-ListenableFuture<B> combine(ListenableFuture<A> a, ListenableFuture<B> b) {
+ListenableFuture<C> combine(ListenableFuture<A> a, ListenableFuture<B> b) {
   return Futures.transform(Futures.allAsList(Arrays.asList(a, b)),
       (List<Object> input) -> {
         A a = (A) input.get(0);
         B b = (B) input.get(1);
-        return new B(a.a(), b.b());
+        return new C(a.a(), b.b());
       });
 }
 ```
@@ -101,11 +101,16 @@ Builder was introduced to somewhat simplify composition of eventual provider mod
 Injector resulting = new EventualModules.Builder()
     .add(new Providers())
     .joinInjector();
-// See other builder methods:
-// .skipFailed()
-// .asyncExecutor(Executor)
-// .toFuture()
+
+// Other builder methods:
+//  .skipFailed()
+//  .executor(Executor)
+//  .toFuture()
 ```
 
 The alternative to the solution would be to use plain composition of futures. But even with java 8 lambdas, it's still might be cumbersome to reason about complicated chains of transformation. Definitely, this kind of utility might be also be built specifically for Java 8 without using Guice.
 This is built with Guava's `ListenableFuture` and not with `CompletableFuture`, sorry.
+
+### Examples
+
+[See FutureJection slides and sample "Barbican" project](examples/README.md)

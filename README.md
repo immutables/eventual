@@ -1,4 +1,6 @@
-## org.immutables.eventual
+[![Build Status](https://travis-ci.org/immutables/eventual.svg?branch=master)](https://travis-ci.org/immutables/eventual)
+
+## Eventual Providers
 
 Guice add-ons to resolve future-provided dependencies.
 
